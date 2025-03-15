@@ -1,0 +1,262 @@
+:root {
+  --bg-color: #1e1e1e;
+  --text-color: #f0f0f0;
+  --terminal-bg: #1a1a1a;
+  --terminal-text: #f0f0f0;
+  --terminal-prompt: #0099ff;
+  --accent-color: #0099ff;
+  --secondary-color: #444444;
+  --success-color: #22c55e;
+  --error-color: #ef4444;
+  --warning-color: #f59e0b;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--accent-color);
+}
+
+.quick-presets {
+  margin-top: 1.5rem;
+  background-color: rgba(0, 153, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.quick-presets p {
+  margin-bottom: 0.75rem;
+  font-weight: bold;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.preset-btn {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-btn:hover {
+  background-color: var(--accent-color);
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.terminal-container {
+  background-color: var(--terminal-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  flex: 1;
+}
+
+.terminal-header {
+  display: flex;
+  padding: 0.5rem 1rem;
+  background-color: #333;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.red {
+  background-color: #ff5f56;
+}
+
+.yellow {
+  background-color: #ffbd2e;
+}
+
+.green {
+  background-color: #27c93f;
+}
+
+.terminal-title {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+#terminal {
+  padding: 1rem;
+  height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+#terminal-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.terminal-output {
+  padding: 0.25rem 0;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+}
+
+.prompt {
+  color: var(--terminal-prompt);
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+#terminal-input {
+  background: transparent;
+  border: none;
+  color: var(--terminal-text);
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  flex: 1;
+}
+
+#download-section {
+  background-color: rgba(0, 153, 255, 0.1);
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+#download-section h2 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.primary {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.primary:hover {
+  background-color: #0077cc;
+}
+
+.secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.secondary:hover {
+  background-color: #333;
+}
+
+.hidden {
+  display: none;
+}
+
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+footer a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive styles */
+@media (max-width: 600px) {
+  .preset-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .preset-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  #terminal {
+    height: 350px;
+  }
+} 

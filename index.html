@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cursor Workspace Configurator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Cursor Workspace Configurator</h1>
+      <p>Set up and configure your Cursor IDE workspace with optimal settings</p>
+      
+      <div class="quick-presets">
+        <p>Quick Start with Presets:</p>
+        <div class="preset-buttons">
+          <button id="web-preset" class="preset-btn">Web Frontend</button>
+          <button id="mobile-preset" class="preset-btn">Mobile App</button>
+          <button id="backend-preset" class="preset-btn">Backend Service</button>
+          <button id="fullstack-preset" class="preset-btn">Full-Stack App</button>
+        </div>
+      </div>
+    </header>
+    
+    <main>
+      <div class="terminal-container">
+        <div class="terminal-header">
+          <div class="terminal-controls">
+            <span class="control red"></span>
+            <span class="control yellow"></span>
+            <span class="control green"></span>
+          </div>
+          <div class="terminal-title">Terminal</div>
+        </div>
+        <div id="terminal">
+          <div id="terminal-content">
+            <!-- Terminal output will appear here -->
+          </div>
+          <div class="terminal-input-line">
+            <span class="prompt">></span>
+            <input type="text" id="terminal-input" autofocus />
+          </div>
+        </div>
+      </div>
+      
+      <div id="download-section" class="hidden">
+        <h2>Your Workspace is Ready!</h2>
+        <p>Download your configuration and follow the instructions to set up your Cursor workspace.</p>
+        <div class="buttons">
+          <button id="download-btn" class="btn primary">Download Configuration</button>
+          <button id="restart-btn" class="btn secondary">Start Over</button>
+        </div>
+      </div>
+    </main>
+    
+    <footer>
+      <p>Powered by Cursor - The AI-first code editor</p>
+      <a href="https://cursor.sh" target="_blank">Learn more about Cursor</a>
+    </footer>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="terminal.js"></script>
+</body>
+</html> 
