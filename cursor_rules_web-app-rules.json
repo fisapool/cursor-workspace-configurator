@@ -1,0 +1,9 @@
+{
+  "description": "Apply this rule when building a web application",
+  "patterns": ["src/**/*.js", "src/**/*.html"],
+  "rules": {
+    "max-line-length": 80,
+    "no-unused-vars": true
+  },
+  "references": ["common-rules.json"]
+}

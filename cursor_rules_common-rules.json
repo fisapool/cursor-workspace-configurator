@@ -1,0 +1,8 @@
+{
+  "description": "Common rules for all projects",
+  "patterns": ["**/*.js"],
+  "rules": {
+    "indent": 2,
+    "semi": true
+  }
+}

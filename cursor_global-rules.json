@@ -1,0 +1,8 @@
+{
+  "description": "Global rules for AI behavior",
+  "rules": {
+    "output-language": "en",
+    "response-length": 200,
+    "default-indent": 2
+  }
+}
