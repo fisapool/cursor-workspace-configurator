@@ -1,6 +1,6 @@
 // Configuration state
 const config = {
-  projectName: '',
+  projectDescription: '',
   projectType: '',
   programmingLanguages: [],
   frameworks: [],
@@ -20,12 +20,17 @@ const config = {
   }
 };
 
-// Default configurations for quick setup
+// Default configurations for quick setup and presets
 const defaultConfigs = {
   "web": {
     projectType: 'Web Application',
     programmingLanguages: ['JavaScript', 'TypeScript', 'HTML', 'CSS'],
     frameworks: ['React', 'Next.js'],
+    editorSettings: {
+      tabSize: 2,
+      insertSpaces: true,
+      formatOnSave: true
+    },
     aiRules: 'Always use functional React components\nPrefer modern JavaScript syntax\nUse proper accessibility attributes\nComment complex logic',
     enableEarlyAccess: true,
     betaFeatures: {
@@ -38,6 +43,11 @@ const defaultConfigs = {
     projectType: 'Mobile App',
     programmingLanguages: ['JavaScript', 'TypeScript'],
     frameworks: ['React Native'],
+    editorSettings: {
+      tabSize: 2,
+      insertSpaces: true,
+      formatOnSave: true  
+    },
     aiRules: 'Follow mobile design best practices\nOptimize for performance\nLimit bundle size\nUse platform-specific APIs when necessary',
     enableEarlyAccess: true,
     betaFeatures: {
@@ -50,6 +60,11 @@ const defaultConfigs = {
     projectType: 'Backend Service',
     programmingLanguages: ['JavaScript', 'TypeScript', 'Python'],
     frameworks: ['Node.js', 'Express'],
+    editorSettings: {
+      tabSize: 2,
+      insertSpaces: true,
+      formatOnSave: true
+    },
     aiRules: 'Use proper error handling\nImplement input validation\nFollow security best practices\nInclude comprehensive logging',
     enableEarlyAccess: true,
     betaFeatures: {
@@ -59,9 +74,14 @@ const defaultConfigs = {
     }
   },
   "fullstack": {
-    projectType: 'Web Application',
+    projectType: 'Full-Stack Application',
     programmingLanguages: ['JavaScript', 'TypeScript', 'HTML', 'CSS', 'Python'],
     frameworks: ['React', 'Next.js', 'Node.js', 'Express'],
+    editorSettings: {
+      tabSize: 2,
+      insertSpaces: true,
+      formatOnSave: true
+    },
     aiRules: 'Always use functional React components\nPrefer modern JavaScript syntax\nUse proper error handling\nImplement input validation\nFollow security best practices',
     enableEarlyAccess: true,
     betaFeatures: {
@@ -75,29 +95,33 @@ const defaultConfigs = {
 // Terminal state
 let currentStep = 0;
 let isCustomSetup = true;
+let setupCompleted = false;
+let isSetupInProgress = false; // Add flag to track if a setup is in progress
+let debugMode = false; // Add debug mode flag
+let inPresetMode = false; // New flag to track if we're in preset mode
 
 const setupOptions = [
-  { prompt: 'Welcome to Cursor Workspace Setup!\n\nChoose setup mode:\n1) Quick Setup (recommended defaults)\n2) Custom Setup (answer all questions)\nEnter number:', isOption: true }
+  { prompt: 'Welcome to Cursor Workspace Setup!\n\nChoose setup mode:\n1) Quick Setup (recommended defaults)\n2) Custom Setup (answer all questions)\n3) Debug Mode (verbose logging)\nEnter number:', isOption: true }
 ];
 
 const quickSetupSteps = [
-  { prompt: 'What is your project name?', field: 'projectName' },
+  { prompt: 'What is your project description?', field: 'projectDescription' },
   { 
-    prompt: 'What type of project template do you want to use?\n1) Web Frontend\n2) Mobile App\n3) Backend Service\n4) Full-Stack App\nEnter number:', 
-    field: 'templateType',
+    prompt: 'What type of project is this?\n1) Web Application\n2) Mobile App\n3) Backend Service\n4) Desktop Application\n5) Library/Package\nEnter number:', 
+    field: 'projectType',
     process: (input) => {
-      const options = ['web', 'mobile', 'backend', 'fullstack'];
+      const options = ['Web Application', 'Mobile App', 'Backend Service', 'Desktop Application', 'Library/Package'];
       const selection = parseInt(input);
       if (selection >= 1 && selection <= options.length) {
         return options[selection - 1];
       }
-      return 'web'; // Default to web if invalid input
+      return input;
     }
   }
 ];
 
 const customSetupSteps = [
-  { prompt: 'What is your project name?', field: 'projectName' },
+  { prompt: 'What is your project description?', field: 'projectDescription' },
   { 
     prompt: 'What type of project is this?\n1) Web Application\n2) Mobile App\n3) Backend Service\n4) Desktop Application\n5) Library/Package\nEnter number:', 
     field: 'projectType',
@@ -174,15 +198,48 @@ let steps = setupOptions;
 const terminalContent = document.getElementById('terminal-content');
 const terminalInput = document.getElementById('terminal-input');
 const downloadSection = document.getElementById('download-section');
-const downloadBtn = document.getElementById('download-btn');
 const restartBtn = document.getElementById('restart-btn');
-const webPresetBtn = document.getElementById('web-preset');
-const mobilePresetBtn = document.getElementById('mobile-preset');
-const backendPresetBtn = document.getElementById('backend-preset');
-const fullstackPresetBtn = document.getElementById('fullstack-preset');
 
 // Initialize
 window.onload = () => {
+  console.log('Window loaded, initializing application...');
+  
+  // Add a debug button in the header
+  const debugToggle = document.createElement('button');
+  debugToggle.id = 'debug-toggle';
+  debugToggle.className = 'btn secondary';
+  debugToggle.textContent = 'Debug Mode';
+  debugToggle.style.position = 'absolute';
+  debugToggle.style.top = '10px';
+  debugToggle.style.right = '10px';
+  debugToggle.style.zIndex = '100';
+  debugToggle.addEventListener('click', toggleDebugMode);
+  document.body.appendChild(debugToggle);
+
+  // Add scroll indicator
+  const scrollIndicator = document.createElement('div');
+  scrollIndicator.id = 'scroll-indicator';
+  scrollIndicator.innerHTML = '⬇️ More below ⬇️';
+  scrollIndicator.style.position = 'absolute';
+  scrollIndicator.style.bottom = '10px';
+  scrollIndicator.style.left = '50%';
+  scrollIndicator.style.transform = 'translateX(-50%)';
+  scrollIndicator.style.backgroundColor = 'rgba(76, 175, 80, 0.8)';
+  scrollIndicator.style.color = 'white';
+  scrollIndicator.style.padding = '5px 10px';
+  scrollIndicator.style.borderRadius = '4px';
+  scrollIndicator.style.fontSize = '12px';
+  scrollIndicator.style.fontWeight = 'bold';
+  scrollIndicator.style.zIndex = '100';
+  scrollIndicator.style.opacity = '0';
+  scrollIndicator.style.transition = 'opacity 0.3s ease';
+  scrollIndicator.style.pointerEvents = 'none';
+  document.getElementById('terminal').appendChild(scrollIndicator);
+
+  // Setup scroll event listener to show/hide the indicator
+  const terminal = document.getElementById('terminal');
+  terminal.addEventListener('scroll', checkScrollIndicator);
+  
   printToTerminal(steps[currentStep].prompt);
   
   terminalInput.addEventListener('keypress', (e) => {
@@ -191,15 +248,142 @@ window.onload = () => {
     }
   });
   
-  downloadBtn.addEventListener('click', generateAndDownloadFiles);
+  // Ensure input is focused when clicking anywhere in the terminal
+  document.getElementById('terminal').addEventListener('click', () => {
+    terminalInput.focus();
+  });
+  
   restartBtn.addEventListener('click', restart);
   
-  // Setup preset buttons
-  webPresetBtn.addEventListener('click', () => applyPreset('web'));
-  mobilePresetBtn.addEventListener('click', () => applyPreset('mobile'));
-  backendPresetBtn.addEventListener('click', () => applyPreset('backend'));
-  fullstackPresetBtn.addEventListener('click', () => applyPreset('fullstack'));
+  // Add export to cursor button handler
+  const exportToCursorBtn = document.getElementById('export-to-cursor-btn');
+  console.log('Export to Cursor button found?', !!exportToCursorBtn);
+  
+  if (exportToCursorBtn) {
+    console.log('Adding click event listener to Export to Cursor button');
+    exportToCursorBtn.addEventListener('click', showExportModal);
+    
+    // Make sure the button is visible and properly styled
+    exportToCursorBtn.style.visibility = 'visible';
+    exportToCursorBtn.style.display = 'inline-flex';
+  } else {
+    console.error('Export to Cursor button not found in the DOM');
+  }
+  
+  // Add modal close handler
+  const closeModalBtn = document.querySelector('.close-modal');
+  console.log('Close modal button found?', !!closeModalBtn);
+  
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', hideExportModal);
+  } else {
+    console.error('Close modal button not found in the DOM');
+  }
+  
+  // Add copy button handlers
+  const copyButtons = document.querySelectorAll('.copy-btn');
+  console.log('Copy buttons found:', copyButtons.length);
+  
+  copyButtons.forEach(btn => {
+    btn.addEventListener('click', copyToClipboard);
+  });
+  
+  // Check for clipboard API support and add backup if needed
+  addExportBackupSupport();
+  
+  // Add automation script button handlers
+  const macScriptBtn = document.getElementById('mac-script-btn');
+  const winScriptBtn = document.getElementById('win-script-btn');
+  const linuxScriptBtn = document.getElementById('linux-script-btn');
+  
+  if (macScriptBtn) macScriptBtn.addEventListener('click', () => generateAutomationScript('mac'));
+  if (winScriptBtn) winScriptBtn.addEventListener('click', () => generateAutomationScript('win'));
+  if (linuxScriptBtn) linuxScriptBtn.addEventListener('click', () => generateAutomationScript('linux'));
+  
+  // Ensure the input field is focused
+  terminalInput.focus();
 };
+
+// Debug functions
+function toggleDebugMode() {
+  debugMode = !debugMode;
+  debugLog(`Debug mode ${debugMode ? 'enabled' : 'disabled'}`);
+  
+  // Find the debug toggle button
+  const debugToggleBtn = document.getElementById('debug-toggle');
+  if (debugToggleBtn) {
+    debugToggleBtn.textContent = debugMode ? 'Disable Debug Mode' : 'Enable Debug Mode';
+  }
+  
+  if (debugMode) {
+    // Add debug panel
+    const debugPanel = document.createElement('div');
+    debugPanel.id = 'debug-panel';
+    debugPanel.className = 'debug-panel';
+    debugPanel.innerHTML = `
+      <h3>Debug Panel</h3>
+      <div class="debug-content">
+        <div>Current Step: <span id="debug-step">${currentStep}</span></div>
+        <div>Setup Mode: <span id="debug-mode">${isCustomSetup ? 'Custom' : 'Quick'}</span></div>
+        <div>Setup Completed: <span id="debug-completed">${setupCompleted}</span></div>
+        <div>Setup In Progress: <span id="debug-in-progress">${isSetupInProgress}</span></div>
+        <pre id="debug-config">${JSON.stringify(config, null, 2)}</pre>
+      </div>
+    `;
+    document.body.appendChild(debugPanel);
+    
+    // Add dump config button
+    const dumpConfigBtn = document.createElement('button');
+    dumpConfigBtn.textContent = 'Dump Config to Console';
+    dumpConfigBtn.className = 'btn secondary';
+    dumpConfigBtn.addEventListener('click', () => {
+      console.log('Current Configuration:', config);
+      debugLog('Configuration dumped to console');
+    });
+    document.getElementById('debug-panel').appendChild(dumpConfigBtn);
+  } else {
+    // Remove debug panel if it exists
+    const debugPanel = document.getElementById('debug-panel');
+    if (debugPanel) {
+      document.body.removeChild(debugPanel);
+    }
+  }
+}
+
+function debugLog(message) {
+  if (!debugMode) return;
+  
+  console.log(`[DEBUG] ${message}`);
+  
+  // Also print to terminal with special formatting
+  const line = document.createElement('div');
+  line.className = 'terminal-output debug-message';
+  line.innerHTML = `<span class="debug-prefix">[DEBUG]</span> ${message}`;
+  terminalContent.appendChild(line);
+  
+  // Auto-scroll to bottom
+  const terminal = document.getElementById('terminal');
+  terminal.scrollTop = terminal.scrollHeight;
+  
+  // Update debug panel if it exists
+  updateDebugPanel();
+}
+
+function updateDebugPanel() {
+  if (!debugMode) return;
+  
+  const debugStep = document.getElementById('debug-step');
+  const debugMode = document.getElementById('debug-mode');
+  const debugCompleted = document.getElementById('debug-completed');
+  const debugInProgress = document.getElementById('debug-in-progress');
+  const debugConfig = document.getElementById('debug-config');
+  
+  if (debugStep) debugStep.textContent = currentStep;
+  if (debugMode) debugMode.textContent = isCustomSetup ? 'Custom' : 'Quick';
+  if (debugCompleted) debugCompleted.textContent = setupCompleted;
+  if (debugInProgress) debugInProgress.textContent = isSetupInProgress;
+  if (debugConfig) debugConfig.textContent = JSON.stringify(config, null, 2);
+}
 
 // Terminal functions
 function printToTerminal(text, isInput = false) {
@@ -214,9 +398,31 @@ function printToTerminal(text, isInput = false) {
   
   terminalContent.appendChild(line);
   
-  // Auto-scroll to bottom
+  // Improved auto-scroll to bottom - ensure it's always visible
   const terminal = document.getElementById('terminal');
-  terminal.scrollTop = terminal.scrollHeight;
+  
+  // Add visual feedback to the terminal container itself
+  terminal.classList.add('terminal-updated');
+  setTimeout(() => {
+    terminal.classList.remove('terminal-updated');
+  }, 800);
+  
+  setTimeout(() => {
+    terminal.scrollTop = terminal.scrollHeight;
+    
+    // Add a brief highlight effect to the new line
+    line.classList.add('new-line');
+    setTimeout(() => {
+      line.classList.remove('new-line');
+    }, 800);
+    
+    // Check if we need to show the scroll indicator
+    checkScrollIndicator();
+  }, 10);
+  
+  if (debugMode && !isInput) {
+    console.log(`[TERMINAL] ${text}`);
+  }
 }
 
 function handleInput() {
@@ -224,76 +430,205 @@ function handleInput() {
   printToTerminal(input, true);
   terminalInput.value = '';
   
-  if (steps[currentStep].isOption) {
-    // Handle setup mode selection
+  // Skip regular processing if we're in preset mode
+  if (inPresetMode) {
+    if (debugMode) console.log(`Debug: In preset mode, skipping regular input processing`);
+    return;
+  }
+  
+  if (debugMode) console.log(`Debug: Input received: "${input}", current step: ${currentStep}`);
+  
+  // Special handling for setup mode selection (first step)
+  if (steps === setupOptions && currentStep === 0) {
     if (input === '1') {
       isCustomSetup = false;
       steps = quickSetupSteps;
       printToTerminal('Quick Setup mode selected. You\'ll be asked for minimal information and the rest will be configured with recommended defaults.');
-    } else {
+      if (debugMode) console.log('Debug: Quick Setup mode selected');
+    } else if (input === '2') {
       isCustomSetup = true;
       steps = customSetupSteps;
       printToTerminal('Custom Setup mode selected. You\'ll be asked for detailed configuration options.');
+      if (debugMode) console.log('Debug: Custom Setup mode selected');
+    } else if (input === '3') {
+      // Enable debug mode and restart
+      debugMode = true;
+      toggleDebugMode();
+      printToTerminal('Debug Mode enabled. Verbose logging will be shown.');
+      printToTerminal('Please select a setup mode:');
+      printToTerminal('1) Quick Setup (recommended defaults)');
+      printToTerminal('2) Custom Setup (answer all questions)');
+      if (debugMode) console.log('Debug: Debug Mode enabled via menu');
+      return;
+    } else {
+      printToTerminal('Invalid option. Please enter 1, 2, or 3.');
+      if (debugMode) console.log(`Debug: Invalid option entered: ${input}`);
+      return;
     }
+    
+    // Reset to start at first question of the new setup flow
     currentStep = 0;
+    
+    // Add a visual separator
+    printToTerminal('\n' + '-'.repeat(50) + '\n');
+    
+    // Show the first prompt, focus input, and ensure it's visible
     printToTerminal(steps[currentStep].prompt);
-    return;
+    terminalInput.focus();
+    
+    // Force scroll to the bottom to show the prompt
+    const terminal = document.getElementById('terminal');
+    setTimeout(() => {
+      terminal.scrollTop = terminal.scrollHeight;
+    }, 50);
+    
+    if (debugMode) console.log(`Debug: Setup mode selected, showing first prompt: "${steps[currentStep].prompt}"`);
+    return; // Important: Return here to prevent further processing
   }
   
-  // Process the input
+  // Store current step number before processing to track progression
+  const stepBeforeProcessing = currentStep;
+  
+  // Process the input - this may increment currentStep if successful
   processStep(input);
   
-  // Move to next step or finish
-  if (currentStep < steps.length) {
-    printToTerminal(steps[currentStep].prompt);
-  } else {
-    if (!isCustomSetup) {
-      // Apply template defaults based on selection
-      applyTemplateDefaults();
+  // Only proceed if we've actually advanced to the next step
+  if (currentStep > stepBeforeProcessing) {
+    if (debugMode) console.log(`Debug: Step advanced from ${stepBeforeProcessing} to ${currentStep}`);
+    
+    // If we have more steps to go
+    if (currentStep < steps.length) {
+      // Add a visual separator instead of clearing the terminal
+      printToTerminal('\n' + '-'.repeat(50) + '\n');
+      printToTerminal(steps[currentStep].prompt);
+      
+      // Force scroll to show the new prompt
+      const terminal = document.getElementById('terminal');
+      setTimeout(() => {
+        terminal.scrollTop = terminal.scrollHeight;
+      }, 50);
+      
+      if (debugMode) console.log(`Debug: Showing prompt for step ${currentStep}: "${steps[currentStep].prompt}"`);
+    } else {
+      // We've completed all steps, apply template and finish
+      if (debugMode) console.log(`Debug: All steps completed (${currentStep} >= ${steps.length})`);
+      if (!isCustomSetup) {
+        // Apply template defaults based on project type
+        applyTemplateDefaults();
+      }
+      finishSetup();
     }
-    finishSetup();
+  } else {
+    // Step didn't advance (validation failed)
+    if (debugMode) console.log(`Debug: Step didn't advance, still at ${currentStep}`);
+    
+    // Force scroll to show error messages
+    const terminal = document.getElementById('terminal');
+    setTimeout(() => {
+      terminal.scrollTop = terminal.scrollHeight;
+    }, 50);
   }
+  
+  // Always focus the input field
+  setTimeout(() => {
+    terminalInput.focus();
+  }, 100);
 }
 
 function processStep(input) {
-  const step = steps[currentStep - 1];
-  if (!step) return;
+  // Get the current step we're processing
+  const step = steps[currentStep];
+  
+  if (!step) {
+    if (debugMode) console.log(`Debug: No step found at currentStep=${currentStep}`);
+    return;
+  }
+  
+  if (debugMode) {
+    console.log(`Debug: Processing step ${currentStep}:`);
+    console.log(`Debug: Field: ${step.field}, Input: "${input}"`);
+  }
   
   // Process the input if needed
   const value = step.process ? step.process(input) : input;
   
-  // Update the configuration
-  if (step.field === 'templateType') {
-    // Store the template choice for later
-    config.templateType = value;
-  } else if (step.field.includes('.')) {
+  // Special handling for project description validation
+  if (step.field === 'projectDescription') {
+    // Trim any whitespace
+    const trimmedValue = typeof value === 'string' ? value.trim() : value;
+    
+    // Check if project description is empty
+    if (!trimmedValue) {
+      // Make error message more visible
+      printToTerminal('\n⚠️ ERROR: Project description cannot be empty. Please try again. ⚠️\n');
+      
+      // Re-focus the input field but DO NOT advance to next step
+      setTimeout(() => {
+        terminalInput.focus();
+      }, 100);
+      
+      if (debugMode) console.log(`Debug: Empty project description detected, not advancing step`);
+      return; // Don't increment currentStep, so we'll ask the same question again
+    }
+    
+    // Update with trimmed value and log it
+    config[step.field] = trimmedValue;
+    if (debugMode) console.log(`Debug: Set project description to "${trimmedValue}" and advancing to next step`);
+    
+    // Increment step here for project description
+    currentStep++;
+    return;
+  } 
+  
+  // For all other fields
+  if (step.field && step.field.includes('.')) {
     const [obj, prop] = step.field.split('.');
     config[obj][prop] = value;
-  } else {
+    if (debugMode) console.log(`Debug: Set config.${obj}.${prop} = ${JSON.stringify(value)}`);
+  } else if (step.field) {
     config[step.field] = value;
+    if (debugMode) console.log(`Debug: Set config.${step.field} = ${JSON.stringify(value)}`);
   }
   
+  // Increment step for non-project description fields
   currentStep++;
+  if (debugMode) console.log(`Debug: Advanced to step ${currentStep}`);
 }
 
 function applyTemplateDefaults() {
-  const templateType = config.templateType || 'web';
-  const template = defaultConfigs[templateType];
+  // Map project type to preset key
+  let presetKey = 'web'; // default
+  
+  if (config.projectType === 'Web Application') {
+    presetKey = 'web';
+  } else if (config.projectType === 'Mobile App') {
+    presetKey = 'mobile';
+  } else if (config.projectType === 'Backend Service') {
+    presetKey = 'backend';
+  } else if (config.projectType === 'Full-Stack Application') {
+    presetKey = 'fullstack';
+  }
+  
+  debugLog(`Applying template defaults for preset: ${presetKey}`);
+  
+  const template = defaultConfigs[presetKey];
   
   // Apply template settings to config
-  config.projectType = template.projectType;
   config.programmingLanguages = template.programmingLanguages;
   config.frameworks = template.frameworks;
+  config.editorSettings = template.editorSettings;
   config.aiRules = template.aiRules;
   config.enableEarlyAccess = template.enableEarlyAccess;
   config.betaFeatures = template.betaFeatures;
   
+  debugLog('Template defaults applied to configuration');
+  
   // Print a summary of applied settings
   printToTerminal('');
   printToTerminal('Applied recommended settings:');
-  printToTerminal(`• Project type: ${config.projectType}`);
   printToTerminal(`• Languages: ${config.programmingLanguages.join(', ')}`);
   printToTerminal(`• Frameworks: ${config.frameworks.join(', ')}`);
+  printToTerminal(`• Editor settings: Tab size ${config.editorSettings.tabSize}, ${config.editorSettings.insertSpaces ? 'Spaces' : 'Tabs'}, Format on save ${config.editorSettings.formatOnSave ? 'enabled' : 'disabled'}`);
   printToTerminal(`• Early Access features: ${config.enableEarlyAccess ? 'Enabled' : 'Disabled'}`);
   printToTerminal(`• Beta features: ${Object.entries(config.betaFeatures)
     .filter(([_, v]) => v)
@@ -302,84 +637,17 @@ function applyTemplateDefaults() {
   printToTerminal('');
 }
 
-function finishSetup() {
-  printToTerminal('✅ Configuration complete! Here\'s your setup:');
-  printToTerminal(JSON.stringify(config, null, 2));
-  printToTerminal('Preparing your workspace files...');
-  
-  setTimeout(() => {
-    printToTerminal('✨ Done! Your files are ready to download.');
-    printToTerminal('');
-    printToTerminal('To use your configured workspace:');
-    printToTerminal('1. Download and extract the ZIP file to your project directory');
-    printToTerminal('2. Open Cursor and select "Open Folder..." from the menu');
-    printToTerminal('3. Navigate to and select your project directory');
-    printToTerminal('4. Start coding with your optimized settings!');
-    
-    // Show download section
-    downloadSection.classList.remove('hidden');
-    
-    // Hide input line
-    document.querySelector('.terminal-input-line').style.display = 'none';
-  }, 1500);
-}
-
-// Generate and download files
-async function generateAndDownloadFiles() {
-  const zip = new JSZip();
-  
-  // Create the .cursor directory structure directly
-  zip.folder('.cursor');
-  zip.folder('.cursor/rules');
-  
-  // Add cursor settings
-  const settings = generateSettings();
-  zip.file('.cursor/settings.json', JSON.stringify(settings, null, 2));
-  
-  // Add global rules
-  const globalRules = generateGlobalRules();
-  zip.file('.cursor/global-rules.json', JSON.stringify(globalRules, null, 2));
-  
-  // Add common rules
-  const commonRules = generateCommonRules();
-  zip.file('.cursor/rules/common-rules.json', JSON.stringify(commonRules, null, 2));
-  
-  // Add web app rules if applicable
-  if (config.projectType === 'Web Application') {
-    const webAppRules = generateWebAppRules();
-    zip.file('.cursor/rules/web-app-rules.json', JSON.stringify(webAppRules, null, 2));
-  }
-  
-  // Add project rules
-  const projectRules = generateProjectRules();
-  zip.file('.cursor/project-rules.json', JSON.stringify(projectRules, null, 2));
-  
-  // Add .cursorrules file if enabled
-  if (config.includeCursorRules) {
-    zip.file('.cursorrules', generateCursorRulesFile());
-  }
-  
-  // Add documentation
-  zip.folder('docs');
-  zip.file('docs/reference.md', generateReferenceDocs());
-  zip.file('docs/troubleshooting.md', generateTroubleshootingDocs());
-  zip.file('docs/beta-settings.md', generateBetaSettingsDocs());
-  zip.file('docs/early-access-program.md', generateEarlyAccessDocs());
-  
-  // Add README
-  zip.file('README.md', generateReadme());
-  
-  // Generate the zip file
-  const content = await zip.generateAsync({ type: 'blob' });
-  
-  // Save the file
-  saveAs(content, `${config.projectName.replace(/\s+/g, '-').toLowerCase()}-cursor-workspace.zip`);
-}
-
 function restart() {
+  debugLog('Restarting setup process');
+  
+  // Reset all flags
+  inPresetMode = false;
+  setupCompleted = false;
+  isSetupInProgress = false;
+  
   // Reset configuration
   Object.assign(config, {
-    projectName: '',
+    projectDescription: '',
     projectType: '',
     programmingLanguages: [],
     frameworks: [],
@@ -406,8 +674,181 @@ function restart() {
   document.querySelector('.terminal-input-line').style.display = 'flex';
   downloadSection.classList.add('hidden');
   
+  // Remove any additional download buttons
+  const buttons = downloadSection.querySelector('.buttons');
+  while (buttons.children.length > 2) { // Keep only the original 2 buttons
+    buttons.removeChild(buttons.lastChild);
+  }
+  
   // Start over
   printToTerminal(steps[currentStep].prompt);
+  debugLog('Setup restarted');
+  
+  updateDebugPanel();
+}
+
+// Helper function to toggle UI elements during setup
+function toggleUIElements(enable) {
+  if (debugMode) console.log(`Debug: Toggling UI elements: ${enable ? 'enabled' : 'disabled'}`);
+  
+  // You can add any UI elements that need to be disabled during setup here
+  // For example, you might want to disable certain buttons or fields
+}
+
+function finishSetup() {
+  // Only proceed if setup hasn't been completed yet
+  if (setupCompleted) {
+    debugLog('Setup already completed, ignoring finishSetup call');
+    return;
+  }
+  
+  // Mark setup as completed and ensure preset mode is reset
+  setupCompleted = true;
+  inPresetMode = false;
+  
+  if (debugMode) console.log('Debug: Setup completed, flags reset: setupCompleted=true, inPresetMode=false');
+  
+  printToTerminal('✅ Configuration complete! Here\'s your setup:');
+  printToTerminal(JSON.stringify(config, null, 2));
+  printToTerminal('Preparing your workspace files...');
+  
+  setTimeout(() => {
+    printToTerminal('✨ Done! Your files are ready to download.');
+    printToTerminal('');
+    printToTerminal('To use your configured workspace:');
+    printToTerminal('1. Choose "Export to Cursor" to apply your configuration');
+    printToTerminal('2. Or use the workspace file option that will appear');
+    printToTerminal('3. Open Cursor and start coding with your optimized settings!');
+    
+    // Generate the workspace file and create download options
+    generateWorkspaceFiles();
+    
+    // Show download section
+    downloadSection.classList.remove('hidden');
+    debugLog('Showing download section');
+    
+    // Hide input line
+    document.querySelector('.terminal-input-line').style.display = 'none';
+    
+    // Enable UI elements again
+    isSetupInProgress = false;
+    toggleUIElements(true);
+    debugLog('Setup process completed, UI elements re-enabled');
+    
+    updateDebugPanel();
+  }, 1500);
+}
+
+// New function to generate workspace files and add download options
+async function generateWorkspaceFiles() {
+  debugLog('Starting workspace file generation process');
+  
+  try {
+    // Create the workspace configuration
+    const settings = generateSettings();
+    
+    // Generate cursor-workspace.code-workspace file for Cursor
+    const workspaceConfig = {
+      folders: [
+        {
+          path: "."
+        }
+      ],
+      settings: {
+        ...settings.editor,
+        "editor.defaultFormatter": settings.editor.defaultFormatter,
+        "cursor.ai": {
+          enabled: settings.ai.enabled,
+          model: settings.ai.model,
+          suggestions: settings.ai.suggestions,
+          rules: settings.ai.rules,
+          includeCursorRulesFile: settings.ai.includeCursorRulesFile,
+          autoComplete: settings.ai.autoComplete
+        },
+        "cursor.workspace": {
+          name: config.projectDescription,
+          type: settings.workspace.type,
+          languages: settings.workspace.languages,
+          frameworks: settings.workspace.frameworks,
+          importVSCodeSettings: settings.workspace.importVSCodeSettings
+        },
+        "cursor.updates": settings.updates,
+        "cursor.beta": settings.beta
+      },
+      extensions: {
+        recommendations: []
+      }
+    };
+    
+    // Create a Blob for the workspace file
+    const workspaceFileName = `${config.projectDescription.replace(/\s+/g, '-').toLowerCase()}.code-workspace`;
+    const workspaceBlob = new Blob([JSON.stringify(workspaceConfig, null, 2)], {type: 'application/json'});
+    const workspaceUrl = URL.createObjectURL(workspaceBlob);
+    
+    // Add workspace file download option
+    const workspaceDownloadOption = document.createElement('div');
+    workspaceDownloadOption.className = 'download-option';
+    workspaceDownloadOption.innerHTML = `
+      <h3>Option 2: Workspace File Only</h3>
+      <p>Download just the .code-workspace file for direct import into Cursor.</p>
+      <a href="${workspaceUrl}" download="${workspaceFileName}" class="btn primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+        Workspace File Only
+      </a>
+    `;
+    
+    // Add to download options section
+    const downloadOptions = document.querySelector('.download-options');
+    if (downloadOptions) {
+      downloadOptions.appendChild(workspaceDownloadOption);
+      debugLog('Added workspace file download option');
+    }
+    
+    // Add debug log download if in debug mode
+    if (debugMode) {
+      // Collect all debug messages
+      const debugMessages = Array.from(document.querySelectorAll('.debug-message'))
+        .map(el => el.textContent)
+        .join('\n');
+      
+      const debugLogBlob = new Blob([
+        `# Debug Log for ${config.projectDescription}\n`,
+        `Generated: ${new Date().toISOString()}\n\n`,
+        `## Configuration\n\`\`\`json\n${JSON.stringify(config, null, 2)}\n\`\`\`\n\n`,
+        `## Log Messages\n${debugMessages}\n`
+      ], {type: 'text/plain'});
+      
+      const debugLogUrl = URL.createObjectURL(debugLogBlob);
+      
+      // Add debug download
+      const debugDownloadOption = document.createElement('div');
+      debugDownloadOption.className = 'download-option debug-download';
+      debugDownloadOption.innerHTML = `
+        <h3>Debug Log</h3>
+        <p>Download the debug log with configuration details and messages.</p>
+        <a href="${debugLogUrl}" download="${config.projectDescription.replace(/\s+/g, '-').toLowerCase()}-debug-log.txt" class="btn secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          Download Debug Log
+        </a>
+      `;
+      
+      if (downloadOptions) {
+        downloadOptions.appendChild(debugDownloadOption);
+        debugLog('Added debug log download option');
+      }
+    }
+  } catch (error) {
+    console.error('Error generating files:', error);
+    debugLog(`ERROR generating files: ${error.message}`);
+    printToTerminal(`⚠️ Error generating files: ${error.message}`);
+  }
 }
 
 // Generate configuration files
@@ -432,7 +873,7 @@ function generateSettings() {
       autoComplete: true
     },
     workspace: {
-      name: config.projectName,
+      name: config.projectDescription,
       type: config.projectType,
       languages: config.programmingLanguages,
       frameworks: config.frameworks,
@@ -609,7 +1050,7 @@ function generateProjectRules() {
 }
 
 function generateCursorRulesFile() {
-  let content = `// Custom rules for Cursor AI\n// These rules will be applied to all AI interactions\n\n`;
+  let content = `// Custom rules for Cursor AI for ${config.projectDescription}\n// These rules will be applied to all AI interactions\n\n`;
   
   if (config.aiRules) {
     content += config.aiRules;
@@ -625,7 +1066,7 @@ Provide example usage where appropriate`;
 }
 
 function generateReferenceDocs() {
-  return `# ${config.projectName} Cursor Workspace Reference
+  return `# ${config.projectDescription} Cursor Workspace Reference
 
 ## Project Details
 - **Project Type**: ${config.projectType}
@@ -773,6 +1214,10 @@ Note: Beta features may impact performance or stability. Use with caution in pro
 }
 
 function generateEarlyAccessDocs() {
+  if (!config.enableEarlyAccess) {
+    return ''; // Return empty string if Early Access is not enabled
+  }
+  
   return `# Early Access Program
 
 The Cursor Early Access Program gives you access to new features before they're generally available.
@@ -822,7 +1267,7 @@ Note: After leaving, you'll return to the latest stable release.
 }
 
 function generateReadme() {
-  return `# ${config.projectName} - Cursor Workspace
+  return `# ${config.projectDescription} - Cursor Workspace
 
 This package contains pre-configured workspace settings for Cursor editor to speed up development for this ${config.projectType} project.
 
@@ -860,87 +1305,342 @@ ${config.aiRules || 'No specific AI rules configured'}
 See the \`docs\` directory for detailed reference and troubleshooting information:
 - reference.md - General reference for your workspace configuration
 - troubleshooting.md - Solutions for common issues
-- beta-settings.md - Information about beta features
-- early-access-program.md - Details about early access features
+${config.betaFeatures.experimentalAIFeatures || config.betaFeatures.advancedCompletion || config.betaFeatures.alternativeModels ? '- beta-settings.md - Information about beta features' : ''}
+${config.enableEarlyAccess ? '- early-access-program.md - Details about early access features' : ''}
 `;
 }
 
-// Apply preset configuration and jump to final step
-function applyPreset(presetType) {
-  // Reset terminal
-  terminalContent.innerHTML = '';
+// Function to show the export modal
+function showExportModal() {
+  console.log('Export to Cursor button clicked');
   
-  // Reset configuration
-  Object.assign(config, {
-    projectName: '',
-    projectType: '',
-    programmingLanguages: [],
-    frameworks: [],
-    editorSettings: {
-      tabSize: 2,
-      insertSpaces: true,
-      formatOnSave: true
-    },
-    aiRules: '',
-    includeCursorRules: true,
-    importVSCodeSettings: false,
-    enableEarlyAccess: false,
-    betaFeatures: {
-      experimentalAIFeatures: false,
-      advancedCompletion: false,
-      alternativeModels: false
-    }
+  // Generate the settings and rules for display
+  const settingsJson = generateSettings();
+  const rulesContent = generateCursorRulesFile();
+  
+  console.log('Generated settings and rules content');
+  
+  // Check if the pre elements exist
+  const settingsElement = document.getElementById('export-settings');
+  const rulesElement = document.getElementById('export-rules');
+  const modalElement = document.getElementById('export-modal');
+  
+  console.log('Export modal elements exist?', {
+    settingsElement: !!settingsElement,
+    rulesElement: !!rulesElement,
+    modalElement: !!modalElement
   });
   
-  // Print welcome message for preset
-  printToTerminal(`Welcome to Cursor Workspace Setup - ${presetType.charAt(0).toUpperCase() + presetType.slice(1)} Preset!`);
+  // Populate the pre elements if they exist
+  if (settingsElement && rulesElement) {
+    settingsElement.textContent = JSON.stringify(settingsJson, null, 2);
+    rulesElement.textContent = rulesContent;
+    console.log('Settings and rules content populated in the modal');
+  } else {
+    console.error('Could not find one or more export elements:',
+      settingsElement ? 'settings found' : 'settings missing',
+      rulesElement ? 'rules found' : 'rules missing');
+  }
   
-  // Ask for project name
-  printToTerminal('What is your project name?');
+  // Show the modal
+  if (modalElement) {
+    modalElement.classList.remove('hidden');
+    console.log('Modal displayed (hidden class removed)');
+  } else {
+    console.error('Could not find export-modal element');
+  }
+}
+
+// Function to hide the export modal
+function hideExportModal() {
+  if (debugMode) console.log('Debug: Hiding export to Cursor modal');
+  document.getElementById('export-modal').classList.add('hidden');
+}
+
+// Function to copy text to clipboard
+function copyToClipboard(e) {
+  const targetId = e.target.getAttribute('data-target');
+  const textToCopy = document.getElementById(targetId).textContent;
   
-  // Setup one-time event listener for project name
-  const onProjectNameEntered = (e) => {
-    if (e.key === 'Enter') {
-      const projectName = terminalInput.value;
-      printToTerminal(projectName, true);
-      terminalInput.value = '';
+  navigator.clipboard.writeText(textToCopy)
+    .then(() => {
+      // Visual indication that copy was successful
+      e.target.textContent = 'Copied!';
+      e.target.classList.add('copied');
       
-      // Remove this event listener after use
-      terminalInput.removeEventListener('keypress', onProjectNameEntered);
+      // Reset after 2 seconds
+      setTimeout(() => {
+        e.target.textContent = 'Copy';
+        e.target.classList.remove('copied');
+      }, 2000);
       
-      // Set project name
-      config.projectName = projectName;
-      
-      // Apply preset defaults
-      const template = defaultConfigs[presetType];
-      config.projectType = template.projectType;
-      config.programmingLanguages = template.programmingLanguages;
-      config.frameworks = template.frameworks;
-      config.aiRules = template.aiRules;
-      config.enableEarlyAccess = template.enableEarlyAccess;
-      config.betaFeatures = template.betaFeatures;
-      
-      // Print summary
-      printToTerminal('');
-      printToTerminal(`Applying ${presetType} preset with recommended settings:`);
-      printToTerminal(`• Project type: ${config.projectType}`);
-      printToTerminal(`• Languages: ${config.programmingLanguages.join(', ')}`);
-      printToTerminal(`• Frameworks: ${config.frameworks.join(', ')}`);
-      printToTerminal(`• Early Access features: ${config.enableEarlyAccess ? 'Enabled' : 'Disabled'}`);
-      printToTerminal(`• Beta features: ${Object.entries(config.betaFeatures)
-        .filter(([_, v]) => v)
-        .map(([k, _]) => k)
-        .join(', ') || 'None'}`);
-      printToTerminal('');
-      
-      // Complete setup
-      finishSetup();
-    }
-  };
+      if (debugMode) console.log(`Debug: Copied ${targetId} to clipboard`);
+    })
+    .catch(err => {
+      console.error('Error copying text: ', err);
+      if (debugMode) console.log(`Debug: Failed to copy ${targetId} to clipboard: ${err}`);
+    });
+}
+
+// Add this to the end of the file to support feature detection for clipboard API
+function isClipboardSupported() {
+  return 'clipboard' in navigator;
+}
+
+// Add support for export if clipboard API is not available
+function addExportBackupSupport() {
+  if (!isClipboardSupported()) {
+    // Add backup export method (e.g., download as text files)
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.textContent = 'Download';
+      btn.removeEventListener('click', copyToClipboard);
+      btn.addEventListener('click', downloadExportFile);
+    });
+  }
+}
+
+// Backup method to download files if clipboard is not supported
+function downloadExportFile(e) {
+  const targetId = e.target.getAttribute('data-target');
+  const textToDownload = document.getElementById(targetId).textContent;
+  const filename = targetId === 'export-settings' ? 'settings.json' : '.cursorrules';
   
-  // Add the one-time event listener
-  terminalInput.addEventListener('keypress', onProjectNameEntered);
+  const blob = new Blob([textToDownload], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
   
-  // Focus input
-  terminalInput.focus();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  if (debugMode) console.log(`Debug: Downloaded ${filename}`);
+}
+
+// Function to generate and download an OS-specific automation script
+function generateAutomationScript(osType) {
+  if (debugMode) console.log(`Debug: Generating ${osType} automation script`);
+  
+  // Get the configuration content
+  const settingsJson = generateSettings();
+  const rulesContent = generateCursorRulesFile();
+  
+  let scriptContent = '';
+  let scriptFilename = '';
+  
+  switch (osType) {
+    case 'mac':
+      scriptContent = generateMacScript(settingsJson, rulesContent);
+      scriptFilename = 'install-cursor-config.sh';
+      break;
+    case 'win':
+      scriptContent = generateWindowsScript(settingsJson, rulesContent);
+      scriptFilename = 'install-cursor-config.bat';
+      break;
+    case 'linux':
+      scriptContent = generateLinuxScript(settingsJson, rulesContent);
+      scriptFilename = 'install-cursor-config.sh';
+      break;
+    default:
+      console.error('Unknown OS type:', osType);
+      return;
+  }
+  
+  // Create and download the script file
+  const blob = new Blob([scriptContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = scriptFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  if (debugMode) console.log(`Debug: Downloaded ${scriptFilename}`);
+}
+
+// Generate macOS installation script
+function generateMacScript(settingsJson, rulesContent) {
+  return `#!/bin/bash
+# Cursor Configuration Installation Script for macOS
+# Generated by Cursor Workspace Configurator
+
+# Color codes for output
+GREEN="\\033[0;32m"
+YELLOW="\\033[1;33m"
+RED="\\033[0;31m"
+NC="\\033[0m" # No Color
+
+echo "\\n${YELLOW}Cursor Configuration Installation Script${NC}"
+echo "=======================================\\n"
+
+# Create the Cursor user directory if it doesn't exist
+CURSOR_DIR="$HOME/Library/Application Support/Cursor/User"
+echo "Creating Cursor user directory (if it doesn't exist)..."
+mkdir -p "$CURSOR_DIR"
+
+if [ ! -d "$CURSOR_DIR" ]; then
+  echo "${RED}Failed to create Cursor directory at $CURSOR_DIR${NC}"
+  exit 1
+fi
+
+# Write settings.json
+echo "Writing settings.json..."
+cat > "$CURSOR_DIR/settings.json" << 'EOL'
+${JSON.stringify(settingsJson, null, 2)}
+EOL
+
+if [ $? -ne 0 ]; then
+  echo "${RED}Failed to write settings.json${NC}"
+  exit 1
+fi
+
+# Write .cursorrules
+echo "Writing .cursorrules..."
+cat > "$HOME/.cursorrules" << 'EOL'
+${rulesContent}
+EOL
+
+if [ $? -ne 0 ]; then
+  echo "${RED}Failed to write .cursorrules${NC}"
+  exit 1
+fi
+
+echo "\\n${GREEN}✓ Configuration files installed successfully!${NC}"
+echo "\\nYou may need to restart Cursor for the changes to take effect."
+echo "\\nEnjoy your new Cursor configuration!"
+`;
+}
+
+// Generate Windows installation script
+function generateWindowsScript(settingsJson, rulesContent) {
+  // Windows needs escaped JSON with double quotes
+  const escapedSettings = JSON.stringify(settingsJson, null, 2).replace(/"/g, '\\"');
+  const escapedRules = rulesContent.replace(/"/g, '\\"');
+  
+  return `@echo off
+:: Cursor Configuration Installation Script for Windows
+:: Generated by Cursor Workspace Configurator
+
+echo.
+echo Cursor Configuration Installation Script
+echo =======================================
+echo.
+
+:: Create the Cursor user directory if it doesn't exist
+set CURSOR_DIR=%APPDATA%\\Cursor\\User
+echo Creating Cursor user directory (if it doesn't exist)...
+if not exist "%CURSOR_DIR%" mkdir "%CURSOR_DIR%"
+
+if not exist "%CURSOR_DIR%" (
+  echo Failed to create Cursor directory at %CURSOR_DIR%
+  exit /b 1
+)
+
+:: Write settings.json
+echo Writing settings.json...
+(
+  echo ${escapedSettings}
+) > "%CURSOR_DIR%\\settings.json"
+
+if %ERRORLEVEL% neq 0 (
+  echo Failed to write settings.json
+  exit /b 1
+)
+
+:: Write .cursorrules
+echo Writing .cursorrules...
+(
+  echo ${escapedRules}
+) > "%USERPROFILE%\\.cursorrules"
+
+if %ERRORLEVEL% neq 0 (
+  echo Failed to write .cursorrules
+  exit /b 1
+)
+
+echo.
+echo Configuration files installed successfully!
+echo.
+echo You may need to restart Cursor for the changes to take effect.
+echo.
+echo Enjoy your new Cursor configuration!
+
+pause
+`;
+}
+
+// Generate Linux installation script
+function generateLinuxScript(settingsJson, rulesContent) {
+  return `#!/bin/bash
+# Cursor Configuration Installation Script for Linux
+# Generated by Cursor Workspace Configurator
+
+# Color codes for output
+GREEN="\\033[0;32m"
+YELLOW="\\033[1;33m"
+RED="\\033[0;31m"
+NC="\\033[0m" # No Color
+
+echo -e "\\n${YELLOW}Cursor Configuration Installation Script${NC}"
+echo -e "=======================================\\n"
+
+# Create the Cursor user directory if it doesn't exist
+CURSOR_DIR="$HOME/.config/Cursor/User"
+echo "Creating Cursor user directory (if it doesn't exist)..."
+mkdir -p "$CURSOR_DIR"
+
+if [ ! -d "$CURSOR_DIR" ]; then
+  echo -e "${RED}Failed to create Cursor directory at $CURSOR_DIR${NC}"
+  exit 1
+fi
+
+# Write settings.json
+echo "Writing settings.json..."
+cat > "$CURSOR_DIR/settings.json" << 'EOL'
+${JSON.stringify(settingsJson, null, 2)}
+EOL
+
+if [ $? -ne 0 ]; then
+  echo -e "${RED}Failed to write settings.json${NC}"
+  exit 1
+fi
+
+# Write .cursorrules
+echo "Writing .cursorrules..."
+cat > "$HOME/.cursorrules" << 'EOL'
+${rulesContent}
+EOL
+
+if [ $? -ne 0 ]; then
+  echo -e "${RED}Failed to write .cursorrules${NC}"
+  exit 1
+fi
+
+echo -e "\\n${GREEN}✓ Configuration files installed successfully!${NC}"
+echo -e "\\nYou may need to restart Cursor for the changes to take effect."
+echo -e "\\nEnjoy your new Cursor configuration!"
+`;
+}
+
+// Function to check if scroll indicator should be shown
+function checkScrollIndicator() {
+  const terminal = document.getElementById('terminal');
+  const scrollIndicator = document.getElementById('scroll-indicator');
+  
+  if (!terminal || !scrollIndicator) return;
+  
+  // Check if we can scroll down more
+  const canScrollMore = terminal.scrollHeight > terminal.clientHeight && 
+                        terminal.scrollTop + terminal.clientHeight < terminal.scrollHeight - 20;
+  
+  if (canScrollMore) {
+    scrollIndicator.style.opacity = '1';
+  } else {
+    scrollIndicator.style.opacity = '0';
+  }
 } 

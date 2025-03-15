@@ -9,6 +9,7 @@
   --success-color: #22c55e;
   --error-color: #ef4444;
   --warning-color: #f59e0b;
+  --border-color: #333;
 }
 
 * {
@@ -52,6 +53,47 @@ header h1 {
   background-color: rgba(0, 153, 255, 0.1);
   border-radius: 8px;
   padding: 1rem;
+}
+
+.import-section {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.import-section #import-info {
+  margin-top: 1rem;
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid var(--warning-color);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: left;
+}
+
+.import-section .file-paths {
+  margin-top: 0.5rem;
+  margin-left: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.import-section .file-paths li {
+  margin-bottom: 0.5rem;
+}
+
+#settings-file-input.visible {
+  display: block;
+  margin: 1rem auto;
+}
+
+.import-success {
+  margin-top: 0.5rem;
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.import-error {
+  margin-top: 0.5rem;
+  color: var(--error-color);
+  font-weight: bold;
 }
 
 .quick-presets p {
@@ -135,11 +177,52 @@ main {
 }
 
 #terminal {
-  padding: 1rem;
+  background-color: var(--terminal-bg);
+  color: var(--terminal-text);
   height: 400px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-family: 'Courier New', monospace;
+  margin-bottom: 1rem;
+  position: relative;
+  scroll-behavior: smooth;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+#terminal:focus-within {
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+  border-color: #4CAF50;
+}
+
+@keyframes terminalPulse {
+  0% { border-color: var(--border-color); }
+  50% { border-color: #4CAF50; }
+  100% { border-color: var(--border-color); }
+}
+
+.terminal-updated {
+  animation: terminalPulse 0.8s ease;
+}
+
+#terminal::-webkit-scrollbar {
+  width: 8px;
+}
+
+#terminal::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+#terminal::-webkit-scrollbar-thumb {
+  background: #4CAF50;
+  border-radius: 4px;
+}
+
+#terminal::-webkit-scrollbar-thumb:hover {
+  background: #45a049;
 }
 
 #terminal-content {
@@ -149,20 +232,43 @@ main {
 }
 
 .terminal-output {
-  padding: 0.25rem 0;
+  margin: 4px 0;
   word-wrap: break-word;
   white-space: pre-wrap;
+  transition: background-color 0.3s ease;
 }
 
+/* Highlight animation for new lines */
+@keyframes highlightFade {
+  0% { background-color: rgba(76, 175, 80, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.new-line {
+  animation: highlightFade 0.8s ease;
+  padding: 2px 0;
+  border-radius: 3px;
+}
+
+/* Make prompts more visible */
+.prompt {
+  color: #4CAF50;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* Add a subtle indicator for the active input area */
 .terminal-input-line {
+  position: relative;
   display: flex;
   align-items: center;
+  padding: 4px 0;
+  border-left: 3px solid transparent;
+  transition: border-left-color 0.3s ease;
 }
 
-.prompt {
-  color: var(--terminal-prompt);
-  margin-right: 0.5rem;
-  font-weight: bold;
+.terminal-input-line:focus-within {
+  border-left-color: #4CAF50;
 }
 
 #terminal-input {
@@ -175,6 +281,7 @@ main {
   flex: 1;
 }
 
+/* Enhanced download section styles */
 #download-section {
   background-color: rgba(0, 153, 255, 0.1);
   border: 1px solid var(--accent-color);
@@ -182,11 +289,124 @@ main {
   padding: 2rem;
   text-align: center;
   margin-top: 2rem;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 #download-section h2 {
   color: var(--accent-color);
   margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+.success-message {
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 1px solid var(--success-color);
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.success-message::before {
+  content: "";
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  width: 10px;
+  height: 10px;
+  background-color: var(--success-color);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.download-options {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.download-option {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  flex: 1;
+  max-width: 300px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.download-option:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.download-option::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+  transition: left 0.8s ease;
+}
+
+.download-option:hover::after {
+  left: 100%;
+}
+
+.download-option h3 {
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.download-option p {
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.restart-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--secondary-color);
+}
+
+.btn svg {
+  margin-right: 8px;
+  vertical-align: middle;
+  transition: transform 0.2s ease;
+}
+
+.btn:hover svg {
+  transform: translateY(-2px);
+}
+
+/* Responsive styles for download section */
+@media (max-width: 768px) {
+  .download-options {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .download-option {
+    width: 100%;
+  }
 }
 
 .buttons {
@@ -258,5 +478,296 @@ footer a:hover {
   
   #terminal {
     height: 350px;
+  }
+}
+
+/* Export modal styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: var(--bg-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close-modal {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.close-modal:hover {
+  color: var(--accent-color);
+}
+
+.export-steps {
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.export-steps h3 {
+  margin-top: 1.5rem;
+  color: var(--accent-color);
+  border-bottom: 1px solid var(--secondary-color);
+  padding-bottom: 0.5rem;
+}
+
+.export-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.export-file {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 1rem;
+  position: relative;
+}
+
+.export-file h4 {
+  margin-bottom: 0.5rem;
+  color: var(--accent-color);
+}
+
+.code-preview {
+  background-color: #121212;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.35rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background-color: var(--accent-color);
+}
+
+.copy-btn.copied {
+  background-color: var(--success-color);
+}
+
+/* Additional button style for the Export to Cursor button */
+.btn.accent {
+  background-color: #9c27b0;
+  color: white;
+}
+
+.btn.accent:hover {
+  background-color: #7b1fa2;
+}
+
+/* Automation section styles */
+.automation-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--secondary-color);
+}
+
+.automation-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+  justify-content: center;
+}
+
+.script-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.script-btn:hover {
+  background-color: var(--accent-color);
+}
+
+.script-btn svg {
+  transition: transform 0.2s;
+}
+
+.script-btn:hover svg {
+  transform: scale(1.2);
+}
+
+.script-note {
+  font-size: 0.85rem;
+  color: #999;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Media query for mobile display */
+@media (max-width: 600px) {
+  .automation-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .script-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+/* Additional download section styles */
+.debug-download {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border: 1px solid var(--warning-color);
+}
+
+/* Improve icons in buttons */
+.btn svg {
+  margin-right: 8px;
+  vertical-align: middle;
+  transition: transform 0.2s ease;
+}
+
+.btn:hover svg {
+  transform: translateY(-2px);
+}
+
+/* Enhance the download-option hover effect */
+.download-option {
+  position: relative;
+  overflow: hidden;
+}
+
+.download-option::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+  transition: left 0.8s ease;
+}
+
+.download-option:hover::after {
+  left: 100%;
+}
+
+/* Additional button style for the Export to Cursor button */
+.btn.accent {
+  background-color: #9c27b0;
+  color: white;
+}
+
+.btn.accent:hover {
+  background-color: #7b1fa2;
+}
+
+/* Automation section styles */
+.automation-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--secondary-color);
+}
+
+.automation-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+  justify-content: center;
+}
+
+.script-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.script-btn:hover {
+  background-color: var(--accent-color);
+}
+
+.script-btn svg {
+  transition: transform 0.2s;
+}
+
+.script-btn:hover svg {
+  transform: scale(1.2);
+}
+
+.script-note {
+  font-size: 0.85rem;
+  color: #999;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Media query for mobile display */
+@media (max-width: 600px) {
+  .automation-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .script-btn {
+    width: 100%;
+    max-width: 200px;
   }
 } 

@@ -30,7 +30,6 @@
   },
   "homepage": "https://github.com/yourusername/cursor-workspace-configurator#readme",
   "dependencies": {
-    "fs": "*",
     "path": "*",
     "readline": "*"
   },

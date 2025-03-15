@@ -1,0 +1,8 @@
+// Custom rules for Cursor AI for cursor
+// These rules will be applied to all AI interactions
+
+Always use consistent code style
+Focus on performance and readability
+Prefer modern phyton syntax
+Write comprehensive comments for complex logic
+Provide example usage where appropriate
